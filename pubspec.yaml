@@ -37,10 +37,19 @@ dependencies:
   #10/02/2025
   flip_card: ^0.7.0
   after_layout: ^1.2.0
+  sqflite_common_ffi: ^2.3.5
+  sqlite3_flutter_libs: ^0.5.31
+  path_provider: ^2.1.5
+  flutter_launcher_icons: ^0.14.3
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  #flutter_launcher_icons:
+  #  android: true
+  #  ios: true
+  #  image_path: "images/download.jpeg"
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -52,6 +61,8 @@ dev_dependencies:
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
+
+
 # The following section is specific to Flutter packages.
 flutter:
 
@@ -61,8 +72,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-assets:
-  - images/
+  assets:
+    - images/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
