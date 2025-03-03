@@ -29,6 +29,6 @@ class _TableroState extends State<Tablero> with AfterLayoutMixin<Tablero>{
   @override
   FutureOr<void> afterFirstLayout(BuildContext context) {
     // TODO: implement afterFirstLayout
-    //throw UnimplementedError();
+    throw UnimplementedError();
   }
 }

@@ -37,6 +37,9 @@ dependencies:
   #10/02/2025
   flip_card: ^0.7.0
   after_layout: ^1.2.0
+  sqflite_common_ffi: ^2.3.5
+  sqlite3_flutter_libs: ^0.5.31
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:
