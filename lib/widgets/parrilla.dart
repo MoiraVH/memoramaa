@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 
 import '../app/home.dart';
 import '../config/config.dart';
+import '../db/sqlite.dart';
+import '../db/victorias.dart';
 import 'menu.dart';
 
 class Parrilla extends StatefulWidget {
@@ -29,7 +31,7 @@ class _ParrillaState extends State<Parrilla> {
   Stopwatch cronometro = Stopwatch();
   Timer? timer;
   String tiempoTranscurrido = "00:00";
-  bool gameOver =false;
+  bool gameOver = false;
 
   @override
   void initState() {
@@ -108,34 +110,37 @@ class _ParrillaState extends State<Parrilla> {
     cronometro.stop();
     timer?.cancel();
 
+    // Guardar derrota en la base de datos
+    _guardarResultado(false);
 
     Future.delayed(Duration(milliseconds: 500), () {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          title: Text("¡Tiempo Agotado!"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text("Se acabó el tiempo"),
-              SizedBox(height: 16),
-              Text("Tiempo: $tiempoTranscurrido"),
-              Text("Movimientos: $movimientos"),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => Home()),
-                      (route) => false,
-                );
-              },
-              child: Text("Volver al menú"),
+        builder: (context) =>
+            AlertDialog(
+              title: Text("¡Tiempo Agotado!"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text("Se acabó el tiempo"),
+                  SizedBox(height: 16),
+                  Text("Tiempo: $tiempoTranscurrido"),
+                  Text("Movimientos: $movimientos"),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => Home()),
+                          (route) => false,
+                    );
+                  },
+                  child: Text("Volver al menú"),
+                ),
+              ],
             ),
-          ],
-        ),
       );
     });
   }
@@ -150,34 +155,37 @@ class _ParrillaState extends State<Parrilla> {
     cronometro.stop();
     timer?.cancel();
 
+    // Guardar victoria en la base de datos
+    _guardarResultado(true);
 
     Future.delayed(Duration(milliseconds: 500), () {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          title: Text("¡Felicidades!"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text("Has completado el juego"),
-              SizedBox(height: 16),
-              Text("Tiempo: $tiempoTranscurrido"),
-              Text("Movimientos: $movimientos"),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => Home()),
-                      (route) => false,
-                );
-              },
-              child: Text("Volver al menú"),
+        builder: (context) =>
+            AlertDialog(
+              title: Text("¡Felicidades!"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text("Has completado el juego"),
+                  SizedBox(height: 16),
+                  Text("Tiempo: $tiempoTranscurrido"),
+                  Text("Movimientos: $movimientos"),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => Home()),
+                          (route) => false,
+                    );
+                  },
+                  child: Text("Volver al menú"),
+                ),
+              ],
             ),
-          ],
-        ),
       );
     });
   }
@@ -198,123 +206,152 @@ class _ParrillaState extends State<Parrilla> {
       ),
       drawer: Menu(level: widget.level),
 
-        body: Column(
-          children: [
-            // Barra de estadísticas
-            Container(
-              padding: EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Movimientos
-                  Text(
-                    "Movimientos: $movimientos",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-
-                  // Pares encontrados/total
-                  Text(
-                    "Pares: $paresEncontrados/$totalPares",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-
-                  // Tiempo transcurrido
-                  Row(
-                    children: [
-                      Icon(Icons.timer),
-                      SizedBox(width: 4),
-                      Text(
-                        tiempoTranscurrido,
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+      body: Column(
+        children: [
+          // Barra de estadísticas
+          Container(
+            padding: EdgeInsets.all(8.0),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ],
             ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Movimientos
+                Text(
+                  "Movimientos: $movimientos",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
 
-            // Rejilla de juego
-            Expanded(
-              child: GridView.builder(
-                  itemCount: baraja.length,
-                  padding: EdgeInsets.all(8.0),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    crossAxisSpacing: 8.0,
-                    mainAxisSpacing: 8.0,
-                  ),
-                  itemBuilder: (context, index) {
-                    return FlipCard(
-                      onFlip: () {
-                        if (mostrandoInicial||!juegoIniciado)
-                          return;
+                // Pares encontrados/total
+                Text(
+                  "Pares: $paresEncontrados/$totalPares",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
 
-                        if (!flag!) {
-                          prevClicked = index;
-                          estados[index] = false;
-                        } else {
-                          setState(() {
-                            habilitado = false;
-                          });
-                        }
-                        flag = !flag!;
+                // Tiempo transcurrido
+                Row(
+                  children: [
+                    Icon(Icons.timer),
+                    SizedBox(width: 4),
+                    Text(
+                      tiempoTranscurrido,
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Rejilla de juego
+          Expanded(
+            child: GridView.builder(
+                itemCount: baraja.length,
+                padding: EdgeInsets.all(8.0),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  crossAxisSpacing: 8.0,
+                  mainAxisSpacing: 8.0,
+                ),
+                itemBuilder: (context, index) {
+                  return FlipCard(
+                    onFlip: () {
+                      if (mostrandoInicial || !juegoIniciado)
+                        return;
+
+                      if (!flag!) {
+                        prevClicked = index;
                         estados[index] = false;
+                      } else {
+                        setState(() {
+                          habilitado = false;
+                        });
+                      }
+                      flag = !flag!;
+                      estados[index] = false;
 
-                        if (prevClicked != index && !flag!) {
-                          if (baraja.elementAt(index) == baraja.elementAt(prevClicked!)) {
-                            debugPrint("clicked: Son Iguales");
+                      if (prevClicked != index && !flag!) {
+                        if (baraja.elementAt(index) ==
+                            baraja.elementAt(prevClicked!)) {
+                          debugPrint("clicked: Son Iguales");
+                          setState(() {
+                            habilitado = true;
+                            paresEncontrados++;
+
+
+                            // Verificar si se encontraron todos los pares
+                            if (paresEncontrados == totalPares) {
+                              _gameOverWin();
+                            }
+                          });
+                        } else {
+                          // Incrementar movimientos solo si las cartas no son iguales
+                          setState(() {
+                            movimientos++;
+                          });
+
+                          Future.delayed(Duration(seconds: 1), () {
+                            controles.elementAt(prevClicked!).toggleCard();
+                            estados[prevClicked!] = true;
+                            prevClicked = index;
+                            controles.elementAt(index).toggleCard();
+                            estados[index] = true;
                             setState(() {
                               habilitado = true;
-                              paresEncontrados++;
-
-
-                              // Verificar si se encontraron todos los pares
-                              if (paresEncontrados == totalPares) {
-                                _gameOverWin();
-                              }
                             });
-                          } else {
-                            // Incrementar movimientos solo si las cartas no son iguales
-                            setState(() {
-                              movimientos++;
-                            });
-
-                            Future.delayed(Duration(seconds: 1), () {
-                              controles.elementAt(prevClicked!).toggleCard();
-                              estados[prevClicked!] = true;
-                              prevClicked = index;
-                              controles.elementAt(index).toggleCard();
-                              estados[index] = true;
-                              setState(() {
-                                habilitado = true;
-                              });
-                            });
-                          }
+                          });
                         }
-                      },
-                      fill: Fill.fillBack,
-                      controller: controles[index],
-                      flipOnTouch: mostrandoInicial ? false : (habilitado! ? estados.elementAt(index) : false),
-                      direction: FlipDirection.HORIZONTAL,
-                      side: CardSide.FRONT,
-                      front: Image.asset("images/quest.png"),
-                      back: Image.asset(baraja[index]),
-                    );
-                  }
-              ),
+                      }
+                    },
+                    fill: Fill.fillBack,
+                    controller: controles[index],
+                    flipOnTouch: mostrandoInicial ? false : (habilitado!
+                        ? estados.elementAt(index)
+                        : false),
+                    direction: FlipDirection.HORIZONTAL,
+                    side: CardSide.FRONT,
+                    front: Image.asset("images/quest.png"),
+                    back: Image.asset(baraja[index]),
+                  );
+                }
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
     );
   }
+
+  Future<void> _guardarResultado(bool esVictoria) async {
+    try {
+      // Crear un registro de Victoria/Derrota
+      Victorias resultado = Victorias(
+        resultado: esVictoria ? 'Victoria' : 'Derrota',
+        nivel: widget.level ?? Level.easy,
+        // Usar el nivel del juego o por defecto fácil
+        movimientos: movimientos,
+        tiempo: tiempoTranscurrido,
+      );
+
+      // Guardar en la base de datos
+      if (esVictoria) {
+        await Sqlite.agregarVictoria(resultado);
+      } else {
+        await Sqlite.agregarDerrota(resultado);
+      }
+    } catch (e) {
+      // Manejar cualquier error de base de datos
+      print('Error al guardar el resultado: $e');
+    }
+  }
 }
+
+
